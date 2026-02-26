@@ -1,0 +1,35 @@
+import { Link } from "react-router-dom";
+import { Col, Container, Row } from "reactstrap";
+import { BackHomePage, CommonPath, pagedescription, pagenotfound } from "@/constant";
+import { ROUTE_PATHS } from "@/router";
+import Img from "@/components/Elements/Images";
+
+const SectionSvg = () => {
+  return (
+    <section className="page-not-found section-b-space">
+      <Container>
+        <Row className="gx-md-2 gx-0 gy-md-0 gy-3">
+          <Col md="8" className="m-auto">
+            <div className="page-image">
+              <Img src={`${CommonPath}/inner-page/404.png`} className="img-fluid" alt="no page found" />
+            </div>
+          </Col>
+
+          <Col md="8" className="mx-auto mt-md-5 mt-3">
+            <div className="page-container pass-forgot">
+              <div>
+                <h2>{pagenotfound}</h2>
+                <p>{pagedescription}</p>
+                <Link to={ROUTE_PATHS.HOME} className="btn btn-solid-default fw-bold">
+                  {BackHomePage}
+                </Link>
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Container>
+    </section>
+  );
+};
+
+export default SectionSvg;

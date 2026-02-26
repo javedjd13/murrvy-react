@@ -1,0 +1,274 @@
+.register-advanced-section {
+  background-color: $demo1-bg;
+  padding: 32px 12px 56px;
+}
+
+.register-card {
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 18px 16px 14px;
+  background-color: $white;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+
+  h2 {
+    margin: 0;
+    color: var(--theme-color);
+    font-size: clamp(28px, 3vw, 42px);
+    font-weight: 700;
+    line-height: 1.05;
+  }
+
+  .register-subtitle {
+    margin: 4px 0 12px;
+    color: #7b828d;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+}
+
+.register-field {
+  margin-bottom: 2px;
+}
+
+.register-form-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: #222529;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.required-mark {
+  margin-left: 2px;
+  color: #4d34c2;
+}
+
+.register-input {
+  width: 100%;
+  height: 39px;
+  padding: 8px 10px;
+  border: 1px solid #dce2eb;
+  border-radius: 3px;
+  background: #f3f6fd;
+  color: #222529;
+  font-size: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: #a0a9b7;
+    font-size: 11px;
+  }
+
+  &:focus {
+    border-color: var(--theme-color);
+    box-shadow: 0 0 0 2px rgba(56, 255, 0, 0.12);
+    background-color: #f3f6fd;
+  }
+
+  &.is-invalid {
+    border-color: #dc3545;
+  }
+}
+
+.register-error {
+  margin: 4px 0 0;
+  color: #dc3545;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.register-divider {
+  border-top: 1px solid #eceff4;
+  margin: 10px 0 10px;
+}
+
+.register-section-title {
+  margin: 0 0 8px;
+  color: #222529;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.register-divider.with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+
+  .register-section-title {
+    margin-bottom: 0;
+  }
+}
+
+.register-link-btn {
+  border: 0;
+  background: transparent;
+  color: var(--theme-color);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.shipping-address-list {
+  margin-top: 8px;
+}
+
+.shipping-address-card {
+  border: 1px solid #e8edf5;
+  border-radius: 4px;
+  padding: 10px 10px 8px;
+  margin-bottom: 8px;
+}
+
+.register-remove-btn {
+  border: 0;
+  background: transparent;
+  color: #dc3545;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: 6px;
+  padding: 0;
+}
+
+.register-remember {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+
+  input[type="checkbox"] {
+    width: 12px;
+    height: 12px;
+    margin: 0;
+  }
+
+  label {
+    margin: 0;
+    color: #6f7680;
+    font-size: 11px;
+    line-height: 1;
+  }
+}
+
+.register-submit-wrap {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .btn {
+    width: 110px;
+    min-height: 36px;
+    border-radius: 4px;
+    border: 1px solid var(--theme-color);
+    background-color: var(--theme-color);
+    color: $white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: none;
+    line-height: 1;
+  }
+}
+
+.register-login-link {
+  margin: 10px 0 0;
+  color: #7b828d;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+
+  .theme-color {
+    color: var(--theme-color);
+    font-weight: 600;
+  }
+}
+
+@include mq-max(md) {
+  .register-advanced-section {
+    padding: 24px 10px 40px;
+  }
+
+  .register-card {
+    border-radius: 6px;
+    padding: 14px 12px;
+  }
+
+  .register-divider.with-action {
+    align-items: flex-start;
+    gap: 8px;
+    flex-direction: column;
+  }
+}
+
+html.dark {
+  .register-advanced-section {
+    background-color: #232323;
+  }
+
+  .register-card {
+    background-color: #2b2b2b;
+    border-color: #3a4048;
+
+    .register-subtitle {
+      color: #b5beca;
+    }
+  }
+
+  .register-form-label,
+  .register-section-title {
+    color: #eef2f7;
+  }
+
+  .register-input {
+    // background-color: #232931;
+    border-color: #3a4048;
+    color: #eef2f7;
+
+    &::placeholder {
+      color: #8e98a8;
+    }
+
+    &:focus {
+      // background-color: #232931;
+      border-color: var(--theme-color);
+      box-shadow: 0 0 0 2px rgba(56, 255, 0, 0.2);
+    }
+  }
+
+  .register-divider {
+    border-top-color: #3a4048;
+  }
+
+  .shipping-address-card {
+    // background-color: #20252d;
+    border-color: #3a4048;
+  }
+
+  .register-remember {
+    label {
+      color: #b5beca;
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--theme-color);
+    }
+  }
+
+  .register-login-link {
+    color: #b5beca;
+  }
+}

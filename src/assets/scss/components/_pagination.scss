@@ -1,0 +1,38 @@
+/**=====================
+     Pagination css start
+==========================**/
+.shop-pagination {
+    .pagination {
+        gap: 8px;
+    }
+
+    .page-link {
+        align-items: center;
+        background-color: #fff;
+        border: 1px solid #eceff4;
+        border-radius: 8px;
+        color: var(--theme-color);
+        display: inline-flex;
+        height: 46px;
+        justify-content: center;
+        min-width: 46px;
+        padding: 0 14px;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--theme-color);
+        border-color: var(--theme-color);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .page-item.disabled .page-link {
+        background-color: #f3f5f9;
+        border-color: #f3f5f9;
+        color: #b7bdc8;
+    }
+}
