@@ -14,7 +14,7 @@ const BundleCartDetails = () => {
         <span>
           <i className='fas fa-plus'></i>
         </span>
-        <div className='image-contain'>
+        <div className='image-contain'> 
           <a href='#javascript'>
             <Img src='/assets/images/fashion/6.jpg' className='img-fluid' alt='fashion' />
           </a>

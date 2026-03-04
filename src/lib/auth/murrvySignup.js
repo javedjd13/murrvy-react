@@ -1,5 +1,9 @@
-import axios from "axios";
 import { normalizeSignupPayload, toSafeString } from "./signupPayload";
+import {
+  createUpstreamError,
+  normalizeUpstreamErrorMessage,
+  postJson,
+} from "./upstreamRequest";
 
 const requiredFieldRules = [
   { key: "first_name", label: "First name" },
@@ -15,8 +19,27 @@ const requiredFieldRules = [
   { key: "pincode", label: "Pincode" },
 ];
 
-const getBaseUrl = () => process.env.MURRVY_API_BASE_URL || "https://api.murrvy.com";
-const getSignupEndpoint = () => process.env.MURRVY_USER_SIGNUP_ENDPOINT || "/api/v1/user/";
+const DEFAULT_BASE_URL = "https://api.murrvy.com";
+const DEFAULT_SIGNUP_ENDPOINT = "/api/v1/user/";
+const DEFAULT_SIGNUP_URL = "https://api.murrvy.com/api/v1/user/";
+const SIGNUP_TIMEOUT_MS = 15000;
+
+const getBaseUrl = () => toSafeString(process.env.MURRVY_API_BASE_URL) || DEFAULT_BASE_URL;
+const getSignupEndpoint = () =>
+  toSafeString(process.env.MURRVY_USER_SIGNUP_ENDPOINT) || DEFAULT_SIGNUP_ENDPOINT;
+const getSignupUrl = () => {
+  const explicitSignupUrl = toSafeString(process.env.MURRVY_USER_SIGNUP_URL);
+
+  if (explicitSignupUrl) {
+    return explicitSignupUrl;
+  }
+
+  try {
+    return new URL(getSignupEndpoint(), getBaseUrl()).toString();
+  } catch (_error) {
+    return DEFAULT_SIGNUP_URL;
+  }
+};
 
 export const validateSignupPayload = (payload = {}) => {
   const missingField = requiredFieldRules.find(({ key }) => !toSafeString(payload[key]));
@@ -61,24 +84,6 @@ export const validateSignupPayload = (payload = {}) => {
   };
 };
 
-const normalizeUpstreamErrorMessage = (error) => {
-  const detail = error?.response?.data?.detail;
-  if (typeof detail === "string" && detail.trim().length > 0) {
-    return detail;
-  }
-
-  const message = error?.response?.data?.message;
-  if (typeof message === "string" && message.trim().length > 0) {
-    return message;
-  }
-
-  if (typeof error?.message === "string" && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return "Unable to complete signup. Please try again.";
-};
-
 export const signupWithMurrvy = async (payload = {}) => {
   const normalizedPayload = normalizeSignupPayload(payload);
   const validation = validateSignupPayload(normalizedPayload);
@@ -89,22 +94,25 @@ export const signupWithMurrvy = async (payload = {}) => {
     throw validationError;
   }
 
-  const url = new URL(getSignupEndpoint(), getBaseUrl()).toString();
+  const url = getSignupUrl();
 
   try {
-    const { data } = await axios.post(url, normalizedPayload, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      timeout: 15000,
+    const data = await postJson({
+      url,
+      body: normalizedPayload,
+      timeoutMs: SIGNUP_TIMEOUT_MS,
+      fallbackErrorMessage: "Unable to complete signup.",
     });
 
     const user = data?.data;
     const isSuccess = data?.status === true && user;
 
     if (!isSuccess) {
-      throw new Error(data?.message || "Unable to create user.");
+      throw createUpstreamError({
+        message: data?.message || "Unable to create user.",
+        status: 500,
+        payload: data,
+      });
     }
 
     return {
@@ -131,8 +139,10 @@ export const signupWithMurrvy = async (payload = {}) => {
       },
     };
   } catch (error) {
-    const signupError = new Error(normalizeUpstreamErrorMessage(error));
-    signupError.status = error?.response?.status || error?.status || 500;
+    const signupError = new Error(
+      normalizeUpstreamErrorMessage(error, "Unable to complete signup. Please try again."),
+    );
+    signupError.status = error?.status || 500;
     throw signupError;
   }
 };

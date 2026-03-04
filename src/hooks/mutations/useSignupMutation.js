@@ -2,6 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 import { signIn } from "next-auth/react";
 import { normalizeSignupPayload } from "@/lib/auth/signupPayload";
 
+const SIGNUP_SUCCESS_REDIRECT = "/layout/shoes";
+
 export const mapRegisterFormToSignupPayload = (values = {}) => {
   const primaryAddress = values?.primaryAddress || {};
   const username = values?.username || values?.email;
@@ -45,16 +47,20 @@ const useSignupMutation = () =>
       const payload = mapRegisterFormToSignupPayload(formValues);
       const response = await signIn("murrvy-signup", {
         redirect: false,
-        callbackUrl: "/layout/shoes",
+        callbackUrl: SIGNUP_SUCCESS_REDIRECT,
         ...payload,
       });
+
+      if (!response) {
+        throw new Error("Unable to reach authentication service. Please try again.");
+      }
 
       if (!response?.ok) {
         throw new Error(normalizeSignInError(response));
       }
 
       return {
-        callbackUrl: response?.url || "/layout/shoes",
+        callbackUrl: response?.url || SIGNUP_SUCCESS_REDIRECT,
       };
     },
   });

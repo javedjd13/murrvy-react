@@ -1,8 +1,30 @@
-import axios from "axios";
 import { toSafeString } from "./signupPayload";
+import {
+  createUpstreamError,
+  normalizeUpstreamErrorMessage,
+  postJson,
+} from "./upstreamRequest";
 
-const getBaseUrl = () => process.env.MURRVY_API_BASE_URL || "https://api.murrvy.com";
-const getLoginEndpoint = () => process.env.MURRVY_LOGIN_ENDPOINT || "/api/v1/login/";
+const DEFAULT_BASE_URL = "https://api.murrvy.com";
+const DEFAULT_LOGIN_ENDPOINT = "/api/v1/login/";
+const DEFAULT_LOGIN_URL = "https://api.murrvy.com/api/v1/login/";
+const LOGIN_TIMEOUT_MS = 15000;
+
+const getBaseUrl = () => toSafeString(process.env.MURRVY_API_BASE_URL) || DEFAULT_BASE_URL;
+const getLoginEndpoint = () => toSafeString(process.env.MURRVY_LOGIN_ENDPOINT) || DEFAULT_LOGIN_ENDPOINT;
+const getLoginUrl = () => {
+  const explicitLoginUrl = toSafeString(process.env.MURRVY_LOGIN_URL);
+
+  if (explicitLoginUrl) {
+    return explicitLoginUrl;
+  }
+
+  try {
+    return new URL(getLoginEndpoint(), getBaseUrl()).toString();
+  } catch (_error) {
+    return DEFAULT_LOGIN_URL;
+  }
+};
 
 export const normalizeLoginPayload = (input = {}) => ({
   username: toSafeString(input.username),
@@ -30,22 +52,32 @@ export const validateLoginPayload = (payload = {}) => {
   };
 };
 
-const normalizeUpstreamErrorMessage = (error) => {
-  const detail = error?.response?.data?.detail;
-  if (typeof detail === "string" && detail.trim().length > 0) {
-    return detail;
+const decodeJwtPayload = (token) => {
+  const safeToken = toSafeString(token);
+  const tokenParts = safeToken.split(".");
+
+  if (tokenParts.length < 2) {
+    return null;
   }
 
-  const message = error?.response?.data?.message;
-  if (typeof message === "string" && message.trim().length > 0) {
-    return message;
+  try {
+    const encodedPayload = tokenParts[1];
+    const decodedPayload = Buffer.from(encodedPayload, "base64url").toString("utf8");
+    return JSON.parse(decodedPayload);
+  } catch (_error) {
+    return null;
+  }
+};
+
+const getTokenExpiryEpochMs = (token) => {
+  const payload = decodeJwtPayload(token);
+  const exp = Number(payload?.exp);
+
+  if (!Number.isFinite(exp) || exp <= 0) {
+    return null;
   }
 
-  if (typeof error?.message === "string" && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return "Unable to login. Please try again.";
+  return exp * 1000;
 };
 
 export const loginWithMurrvy = async (payload = {}) => {
@@ -58,26 +90,43 @@ export const loginWithMurrvy = async (payload = {}) => {
     throw validationError;
   }
 
-  const url = new URL(getLoginEndpoint(), getBaseUrl()).toString();
+  const url = getLoginUrl();
 
   try {
-    const { data } = await axios.post(url, normalizedPayload, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      timeout: 15000,
+    const data = await postJson({
+      url,
+      body: normalizedPayload,
+      timeoutMs: LOGIN_TIMEOUT_MS,
+      fallbackErrorMessage: "Unable to login.",
     });
 
     const user = data?.data;
+    const accessToken = toSafeString(user?.access_token);
+    const tokenType = toSafeString(user?.token_type || "bearer").toLowerCase();
+    const accessTokenExpiresAt = getTokenExpiryEpochMs(accessToken);
     const isSuccess = data?.status === true && user;
 
     if (!isSuccess) {
-      throw new Error(data?.message || "Unable to login.");
+      throw createUpstreamError({
+        message: data?.message || "Unable to login.",
+        status: 500,
+        payload: data,
+      });
+    }
+
+    if (!accessToken) {
+      throw createUpstreamError({
+        message: "Login response did not contain access token.",
+        status: 500,
+        payload: data,
+      });
     }
 
     return {
       message: data?.message || "User login successful.",
+      accessToken,
+      tokenType,
+      accessTokenExpiresAt,
       user: {
         id: String(user?.user_id ?? user?.id ?? user?.username ?? normalizedPayload.username),
         user_id: user?.user_id,
@@ -101,8 +150,10 @@ export const loginWithMurrvy = async (payload = {}) => {
       },
     };
   } catch (error) {
-    const loginError = new Error(normalizeUpstreamErrorMessage(error));
-    loginError.status = error?.response?.status || error?.status || 500;
+    const loginError = new Error(
+      normalizeUpstreamErrorMessage(error, "Unable to login. Please try again."),
+    );
+    loginError.status = error?.status || 500;
     throw loginError;
   }
 };
